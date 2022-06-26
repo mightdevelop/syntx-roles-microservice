@@ -10,7 +10,7 @@ export interface Void {}
 
 export interface Role {
   id: string;
-  groupId: string;
+  projectId: string;
   name: string;
 }
 
@@ -19,7 +19,7 @@ export interface RoleByNameRequest {
 }
 
 export interface CreateRoleRequest {
-  groupId: string;
+  projectId: string;
   name: string;
 }
 
@@ -36,8 +36,13 @@ export interface UserId {
   userId: string;
 }
 
-export interface GroupId {
-  groupId: string;
+export interface UserIdAndProjectId {
+  userId: string;
+  projectId: string;
+}
+
+export interface ProjectId {
+  projectId: string;
 }
 
 export interface RoleIdAndUserId {
@@ -71,9 +76,9 @@ export interface RolesServiceClient {
 
   getRoleByName(request: RoleByNameRequest): Observable<Role>;
 
-  getRolesByUserId(request: UserId): Observable<Role>;
+  getRolesByUserIdAndProjectId(request: UserIdAndProjectId): Observable<Role>;
 
-  getRolesByGroupId(request: GroupId): Observable<Role>;
+  getRolesByProjectId(request: ProjectId): Observable<Role>;
 
   getUsersIdsByRoleId(request: RoleId): Observable<UserId>;
 
@@ -95,9 +100,9 @@ export interface RolesServiceController {
     request: RoleByNameRequest
   ): Promise<Role> | Observable<Role> | Role;
 
-  getRolesByUserId(request: UserId): Observable<Role>;
+  getRolesByUserIdAndProjectId(request: UserIdAndProjectId): Observable<Role>;
 
-  getRolesByGroupId(request: GroupId): Observable<Role>;
+  getRolesByProjectId(request: ProjectId): Observable<Role>;
 
   getUsersIdsByRoleId(request: RoleId): Observable<UserId>;
 
@@ -123,8 +128,8 @@ export function RolesServiceControllerMethods() {
     const grpcMethods: string[] = [
       "getRoleById",
       "getRoleByName",
-      "getRolesByUserId",
-      "getRolesByGroupId",
+      "getRolesByUserIdAndProjectId",
+      "getRolesByProjectId",
       "getUsersIdsByRoleId",
       "createRole",
       "updateRole",
@@ -163,7 +168,9 @@ export const ROLES_SERVICE_NAME = "RolesService";
 export interface PermissionsServiceClient {
   getPermissionById(request: PermissionId): Observable<Permission>;
 
-  getPermissionsByUserId(request: UserId): Observable<Permission>;
+  getPermissionsByUserIdAndProjectId(
+    request: UserIdAndProjectId
+  ): Observable<Permission>;
 
   getPermissionsByRoleId(request: RoleId): Observable<Permission>;
 
@@ -181,7 +188,9 @@ export interface PermissionsServiceController {
     request: PermissionId
   ): Promise<Permission> | Observable<Permission> | Permission;
 
-  getPermissionsByUserId(request: UserId): Observable<Permission>;
+  getPermissionsByUserIdAndProjectId(
+    request: UserIdAndProjectId
+  ): Observable<Permission>;
 
   getPermissionsByRoleId(request: RoleId): Observable<Permission>;
 
@@ -206,7 +215,7 @@ export function PermissionsServiceControllerMethods() {
   return function (constructor: Function) {
     const grpcMethods: string[] = [
       "getPermissionById",
-      "getPermissionsByUserId",
+      "getPermissionsByUserIdAndProjectId",
       "getPermissionsByRoleId",
       "addPermissionToUser",
       "addPermissionToRole",

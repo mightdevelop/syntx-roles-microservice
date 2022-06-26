@@ -1,7 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { Driver } from 'neo4j-driver'
 import {
-    Permission, PermissionId, PermissionIdAndRoleId, PermissionIdAndUserId, RoleId, UserId, Void,
+    Permission,
+    PermissionId,
+    PermissionIdAndRoleId,
+    PermissionIdAndUserId,
+    RoleId,
+    UserIdAndProjectId,
+    Void,
 } from '../roles.pb'
 import { session as neo4jSession } from 'neo4j-driver'
 import { RpcException } from '@nestjs/microservices'
@@ -12,7 +18,9 @@ export class PermissionsService {
     @Inject('DATA_SOURCE')
     private readonly neo4jDriver: Driver
 
-    public async getPermissionById({ permissionId }: PermissionId): Promise<Permission> {
+    public async getPermissionById(
+        { permissionId }: PermissionId
+    ): Promise<Permission> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
         const permission: Permission = (await session
             .run(
@@ -31,7 +39,9 @@ export class PermissionsService {
         return permission
     }
 
-    public async getPermissionsByRoleId({ roleId }: RoleId): Promise<Permission[]> {
+    public async getPermissionsByRoleId(
+        { roleId }: RoleId
+    ): Promise<Permission[]> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
         const permission: Permission[] = (await session
             .run(
@@ -49,19 +59,21 @@ export class PermissionsService {
         return permission
     }
 
-    public async getPermissionsByUserId({ userId }: UserId): Promise<Permission[]> {
+    public async getPermissionsByUserIdAndProjectId(
+        { userId, projectId }: UserIdAndProjectId
+    ): Promise<Permission[]> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
         const permissions: Permission[] = (await session
             .run(
                 `
                 MATCH (p:Permission)
                 WHERE 
-                    (p)<-[:HAS]-(:UserId {id: $userId}) 
+                    (p)<-[:HAS]-(:UserId {id: $userId})<-[:HAS]-(:ProjectId {id: $projectId})
                     OR 
                     (p)<-[:HAS]-(:Role)<-[:HAS]-(:UserId {id: $userId})
                 RETURN p
                 `,
-                { userId }
+                { userId, projectId }
             ))
             .records
             ?.map(record => record.get('p').properties)
@@ -114,7 +126,9 @@ export class PermissionsService {
         return {}
     }
 
-    public async addPermissionToUser({ permissionId, userId }: PermissionIdAndUserId): Promise<Void> {
+    public async addPermissionToUser(
+        { permissionId, userId }: PermissionIdAndUserId
+    ): Promise<Void> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.WRITE })
         const rel = (await session
             .run(
@@ -134,7 +148,9 @@ export class PermissionsService {
         return {}
     }
 
-    public async removePermissionFromUser({ permissionId, userId }: PermissionIdAndUserId): Promise<Void> {
+    public async removePermissionFromUser(
+        { permissionId, userId }: PermissionIdAndUserId
+    ): Promise<Void> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.WRITE })
         const rel = (await session
             .run(

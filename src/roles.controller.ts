@@ -12,7 +12,8 @@ import {
     RoleId,
     UserId,
     RoleIdAndUserId,
-    GroupId
+    ProjectId,
+    UserIdAndProjectId
 } from './roles.pb'
 import { RolesService } from './roles.service'
 
@@ -34,13 +35,13 @@ export class RolesController implements RolesServiceController {
     }
 
     @GrpcMethod(ROLES_SERVICE_NAME, 'getRolesByUserId')
-    public getRolesByUserId(dto: UserId): Observable<ProtoRole> {
-        return from(this.rolesService.getRolesByUserId(dto)).pipe(concatMap(x => x))
+    public getRolesByUserIdAndProjectId(dto: UserIdAndProjectId): Observable<ProtoRole> {
+        return from(this.rolesService.getRolesByUserIdAndProjectId(dto)).pipe(concatMap(x => x))
     }
 
-    @GrpcMethod(ROLES_SERVICE_NAME, 'getRolesByGroupId')
-    public getRolesByGroupId(dto: GroupId): Observable<ProtoRole> {
-        return from(this.rolesService.getRolesByGroupId(dto)).pipe(concatMap(x => x))
+    @GrpcMethod(ROLES_SERVICE_NAME, 'getRolesByProjectId')
+    public getRolesByProjectId(dto: ProjectId): Observable<ProtoRole> {
+        return from(this.rolesService.getRolesByProjectId(dto)).pipe(concatMap(x => x))
     }
 
     @GrpcMethod(ROLES_SERVICE_NAME, 'getUsersIdsByRoleId')

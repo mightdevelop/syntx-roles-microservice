@@ -6,11 +6,11 @@ import {
     PERMISSIONS_SERVICE_NAME,
     Permission as ProtoPermission,
     PermissionId,
-    UserId,
     RoleId,
     PermissionIdAndRoleId,
     PermissionIdAndUserId,
     Void,
+    UserIdAndProjectId,
 } from '../roles.pb'
 import { PermissionsService } from './permissions.service'
 
@@ -32,8 +32,8 @@ export class PermissionsController implements PermissionsServiceController {
     }
 
     @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'getPermissionsByUserId')
-    public getPermissionsByUserId(dto: UserId): Observable<ProtoPermission> {
-        return from(this.permissionsService.getPermissionsByUserId(dto)).pipe(concatMap(x => x))
+    public getPermissionsByUserIdAndProjectId(dto: UserIdAndProjectId): Observable<ProtoPermission> {
+        return from(this.permissionsService.getPermissionsByUserIdAndProjectId(dto)).pipe(concatMap(x => x))
     }
 
     @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'addPermissionToRole')
