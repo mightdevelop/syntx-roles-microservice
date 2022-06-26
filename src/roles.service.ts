@@ -64,7 +64,7 @@ export class RolesService {
         const roles: Role[] = (await session
             .run(
                 `
-                MATCH (role:Role)-[:HAS]-(:UserId {id: $userId})
+                MATCH (role:Role)<-[:HAS]-(:UserId {id: $userId})
                 RETURN role
                 `,
                 { userId }
@@ -96,7 +96,7 @@ export class RolesService {
         const usersIds: string[] = (await session
             .run(
                 `
-                MATCH (:Role {id: $roleId})-[:HAS]-(userId:UserId)
+                MATCH (:Role {id: $roleId})<-[:HAS]-(userId:UserId)
                 RETURN userId
                 `,
                 { roleId }
@@ -193,7 +193,7 @@ export class RolesService {
         const rel = (await session
             .run(
                 `
-                MATCH (:Role {id: $roleId})-[rel:HAS]-(:UserId {id: $userId})
+                MATCH (:Role {id: $roleId})<-[rel:HAS]-(:UserId {id: $userId})
                 DELETE rel
                 RETURN rel
                 `,

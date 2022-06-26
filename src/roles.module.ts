@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { RolesController } from './roles.controller'
 import { RolesService } from './roles.service'
 import { driver, auth } from 'neo4j-driver'
+import { PermissionsModule } from './permissions/permissions.module'
 
 @Module({
     imports: [
@@ -10,6 +11,7 @@ import { driver, auth } from 'neo4j-driver'
             envFilePath: [ `@${process.env.NODE_ENV}.env`, '@.env' ],
             isGlobal: true
         }),
+        PermissionsModule
     ],
     controllers: [ RolesController ],
     providers: [
