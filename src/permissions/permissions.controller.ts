@@ -46,12 +46,12 @@ export class PermissionsController implements PermissionsServiceController {
         return from(this.permissionsService.addPermissionToUser(dto))
     }
 
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'removePermissionToRole')
+    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'removePermissionFromRole')
     public removePermissionFromRole(dto: PermissionIdAndRoleId): Observable<Void> {
         return from(this.permissionsService.removePermissionFromRole(dto))
     }
 
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'removePermissionToUser')
+    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'removePermissionFromUser')
     public removePermissionFromUser(dto: PermissionIdAndUserId): Observable<Void> {
         return from(this.permissionsService.removePermissionFromUser(dto))
     }
