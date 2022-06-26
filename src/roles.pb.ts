@@ -10,44 +10,38 @@ export interface Void {}
 
 export interface Role {
   id: string;
+  groupId: string;
   name: string;
-}
-
-export interface RoleByIdRequest {
-  roleId: string;
 }
 
 export interface RoleByNameRequest {
   roleName: string;
 }
 
-export interface RolesByUserIdRequest {
-  userId: string;
-}
-
-export interface UsersIdsByRoleIdRequest {
-  roleId: string;
-}
-
 export interface CreateRoleRequest {
+  groupId: string;
   name: string;
 }
 
-export interface UpdateRoleRequest {
+export interface RoleIdAndName {
   roleId: string;
   name: string;
 }
 
-export interface DeleteRoleRequest {
+export interface RoleId {
   roleId: string;
 }
 
-export interface RoleIdAndUserIdRequest {
-  roleId: string;
+export interface UserId {
   userId: string;
 }
 
-export interface UserIdResponse {
+export interface GroupId {
+  groupId: string;
+}
+
+export interface RoleIdAndUserId {
+  roleId: string;
   userId: string;
 }
 
@@ -56,24 +50,16 @@ export interface Permission {
   name: string;
 }
 
-export interface PermissionByIdRequest {
+export interface PermissionId {
   permissionId: number;
 }
 
-export interface PermissionsByUserIdRequest {
-  userId: string;
-}
-
-export interface PermissionsByRoleIdRequest {
-  roleId: string;
-}
-
-export interface AddPermissionToUserRequest {
+export interface PermissionIdAndUserId {
   permissionId: number;
   userId: string;
 }
 
-export interface AddPermissionToRoleRequest {
+export interface PermissionIdAndRoleId {
   permissionId: number;
   roleId: string;
 }
@@ -81,60 +67,54 @@ export interface AddPermissionToRoleRequest {
 export const ROLES_PACKAGE_NAME = "roles";
 
 export interface RolesServiceClient {
-  getRoleById(request: RoleByIdRequest): Observable<Role>;
+  getRoleById(request: RoleId): Observable<Role>;
 
   getRoleByName(request: RoleByNameRequest): Observable<Role>;
 
-  getRolesByUserId(request: RolesByUserIdRequest): Observable<Role>;
+  getRolesByUserId(request: UserId): Observable<Role>;
 
-  getUsersIdsByRoleId(
-    request: UsersIdsByRoleIdRequest
-  ): Observable<UserIdResponse>;
+  getRolesByGroupId(request: GroupId): Observable<Role>;
+
+  getUsersIdsByRoleId(request: RoleId): Observable<UserId>;
 
   createRole(request: CreateRoleRequest): Observable<Role>;
 
-  updateRole(request: UpdateRoleRequest): Observable<Role>;
+  updateRole(request: RoleIdAndName): Observable<Role>;
 
-  deleteRole(request: DeleteRoleRequest): Observable<Role>;
+  deleteRole(request: RoleId): Observable<Role>;
 
-  addRoleToUser(request: RoleIdAndUserIdRequest): Observable<Void>;
+  addRoleToUser(request: RoleIdAndUserId): Observable<Void>;
 
-  removeRoleFromUser(request: RoleIdAndUserIdRequest): Observable<Void>;
+  removeRoleFromUser(request: RoleIdAndUserId): Observable<Void>;
 }
 
 export interface RolesServiceController {
-  getRoleById(
-    request: RoleByIdRequest
-  ): Promise<Role> | Observable<Role> | Role;
+  getRoleById(request: RoleId): Promise<Role> | Observable<Role> | Role;
 
   getRoleByName(
     request: RoleByNameRequest
   ): Promise<Role> | Observable<Role> | Role;
 
-  getRolesByUserId(request: RolesByUserIdRequest): Observable<Role>;
+  getRolesByUserId(request: UserId): Observable<Role>;
 
-  getUsersIdsByRoleId(
-    request: UsersIdsByRoleIdRequest
-  ): Observable<UserIdResponse>;
+  getRolesByGroupId(request: GroupId): Observable<Role>;
+
+  getUsersIdsByRoleId(request: RoleId): Observable<UserId>;
 
   createRole(
     request: CreateRoleRequest
   ): Promise<Role> | Observable<Role> | Role;
 
-  updateRole(
-    request: UpdateRoleRequest
-  ): Promise<Role> | Observable<Role> | Role;
+  updateRole(request: RoleIdAndName): Promise<Role> | Observable<Role> | Role;
 
-  deleteRole(
-    request: DeleteRoleRequest
-  ): Promise<Role> | Observable<Role> | Role;
+  deleteRole(request: RoleId): Promise<Role> | Observable<Role> | Role;
 
   addRoleToUser(
-    request: RoleIdAndUserIdRequest
+    request: RoleIdAndUserId
   ): Promise<Void> | Observable<Void> | Void;
 
   removeRoleFromUser(
-    request: RoleIdAndUserIdRequest
+    request: RoleIdAndUserId
   ): Promise<Void> | Observable<Void> | Void;
 }
 
@@ -144,6 +124,7 @@ export function RolesServiceControllerMethods() {
       "getRoleById",
       "getRoleByName",
       "getRolesByUserId",
+      "getRolesByGroupId",
       "getUsersIdsByRoleId",
       "createRole",
       "updateRole",
@@ -180,40 +161,44 @@ export function RolesServiceControllerMethods() {
 export const ROLES_SERVICE_NAME = "RolesService";
 
 export interface PermissionsServiceClient {
-  getPermissionById(request: PermissionByIdRequest): Observable<Permission>;
+  getPermissionById(request: PermissionId): Observable<Permission>;
 
-  getPermissionsByUserId(
-    request: PermissionsByUserIdRequest
-  ): Observable<Permission>;
+  getPermissionsByUserId(request: UserId): Observable<Permission>;
 
-  getPermissionsByRoleId(
-    request: PermissionsByRoleIdRequest
-  ): Observable<Permission>;
+  getPermissionsByRoleId(request: RoleId): Observable<Permission>;
 
-  addPermissionToUser(request: AddPermissionToUserRequest): Observable<Void>;
+  addPermissionToUser(request: PermissionIdAndUserId): Observable<Void>;
 
-  addPermissionToRole(request: AddPermissionToRoleRequest): Observable<Void>;
+  addPermissionToRole(request: PermissionIdAndRoleId): Observable<Void>;
+
+  removePermissionFromUser(request: PermissionIdAndUserId): Observable<Void>;
+
+  removePermissionFromRole(request: PermissionIdAndRoleId): Observable<Void>;
 }
 
 export interface PermissionsServiceController {
   getPermissionById(
-    request: PermissionByIdRequest
+    request: PermissionId
   ): Promise<Permission> | Observable<Permission> | Permission;
 
-  getPermissionsByUserId(
-    request: PermissionsByUserIdRequest
-  ): Observable<Permission>;
+  getPermissionsByUserId(request: UserId): Observable<Permission>;
 
-  getPermissionsByRoleId(
-    request: PermissionsByRoleIdRequest
-  ): Observable<Permission>;
+  getPermissionsByRoleId(request: RoleId): Observable<Permission>;
 
   addPermissionToUser(
-    request: AddPermissionToUserRequest
+    request: PermissionIdAndUserId
   ): Promise<Void> | Observable<Void> | Void;
 
   addPermissionToRole(
-    request: AddPermissionToRoleRequest
+    request: PermissionIdAndRoleId
+  ): Promise<Void> | Observable<Void> | Void;
+
+  removePermissionFromUser(
+    request: PermissionIdAndUserId
+  ): Promise<Void> | Observable<Void> | Void;
+
+  removePermissionFromRole(
+    request: PermissionIdAndRoleId
   ): Promise<Void> | Observable<Void> | Void;
 }
 
@@ -225,6 +210,8 @@ export function PermissionsServiceControllerMethods() {
       "getPermissionsByRoleId",
       "addPermissionToUser",
       "addPermissionToRole",
+      "removePermissionFromUser",
+      "removePermissionFromRole",
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(
