@@ -4,10 +4,11 @@ import {
     Permission,
     PermissionId,
     PermissionIdAndRoleId,
-    PermissionIdAndUserId,
+    PermissionIdAndUserIdAndProjectId,
     RoleId,
     UserIdAndProjectId,
     Void,
+    Bool
 } from '../roles.pb'
 import { session as neo4jSession } from 'neo4j-driver'
 import { RpcException } from '@nestjs/microservices'
@@ -68,7 +69,7 @@ export class PermissionsService {
                 `
                 MATCH (p:Permission)
                 WHERE 
-                    (p)<-[:HAS]-(:UserId {id: $userId})<-[:HAS]-(:ProjectId {id: $projectId})
+                    (p)<-[:HAS_IN_PROJECT {projectId: $projectId}]-(:UserId {id: $userId})
                     OR 
                     (p)<-[:HAS]-(:Role)<-[:HAS]-(:UserId {id: $userId})
                 RETURN p
@@ -79,6 +80,46 @@ export class PermissionsService {
             ?.map(record => record.get('p').properties)
         session.close()
         return permissions
+    }
+
+    public async doesUserHavePermission(
+        { permissionId, projectId, userId }: PermissionIdAndUserIdAndProjectId
+    ): Promise<Bool> {
+        const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
+        const bool = !!(await session
+            .run(
+                `
+                MATCH (p:Permission {id: $permissionId})
+                WHERE 
+                    (p)<-[:HAS_IN_PROJECT {projectId: $projectId}]-(:UserId {id: $userId})
+                    OR 
+                    (p)<-[:HAS]-(:Role)<-[:HAS]-(:UserId {id: $userId})
+                RETURN p
+                `,
+                { permissionId, projectId, userId }
+            ))
+            .records
+            .length
+        session.close()
+        return { bool }
+    }
+
+    public async doesRoleHavePermission(
+        { permissionId, roleId }: PermissionIdAndRoleId
+    ): Promise<Bool> {
+        const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
+        const bool = !!(await session
+            .run(
+                `
+                MATCH (p:Permission {id: $permissionId})<-[:HAS]-(:Role {id: $roleId})
+                RETURN p
+                `,
+                { permissionId, roleId }
+            ))
+            .records
+            .length
+        session.close()
+        return { bool }
     }
 
     public async addPermissionToRole(
@@ -126,18 +167,18 @@ export class PermissionsService {
         return {}
     }
 
-    public async addPermissionToUser(
-        { permissionId, userId }: PermissionIdAndUserId
+    public async addPermissionToUserInProject(
+        { projectId, permissionId, userId }: PermissionIdAndUserIdAndProjectId
     ): Promise<Void> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.WRITE })
         const rel = (await session
             .run(
                 `
                 MATCH (permission:Permission {id: $permissionId})
-                MERGE (:UserId {id: $userId})-[rel:HAS]->(permission)
+                MERGE (:UserId {id: $userId})-[rel:HAS_IN_PROJECT {projectId: $projectId}]->(permission)
                 RETURN rel
                 `,
-                { permissionId, userId }
+                { projectId, permissionId, userId }
             ))
             .records[0]
             ?.get('rel')
@@ -148,8 +189,8 @@ export class PermissionsService {
         return {}
     }
 
-    public async removePermissionFromUser(
-        { permissionId, userId }: PermissionIdAndUserId
+    public async removePermissionFromUserInProject(
+        { projectId, permissionId, userId }: PermissionIdAndUserIdAndProjectId
     ): Promise<Void> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.WRITE })
         const rel = (await session
@@ -159,7 +200,7 @@ export class PermissionsService {
                 DELETE rel
                 RETURN rel
                 `,
-                { permissionId, userId }
+                { projectId, permissionId, userId }
             ))
             .records[0]
             ?.get('rel')
