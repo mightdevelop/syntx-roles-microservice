@@ -4,6 +4,9 @@ import { PermissionsController } from './permissions.controller'
 import { PermissionsService } from './permissions.service'
 import { driver, auth, Driver, session as neo4jSession } from 'neo4j-driver'
 import { permissionsConfig } from './permissions.config'
+import { ClientsModule, Transport } from '@nestjs/microservices'
+import { join } from 'path'
+import { CACHE_PACKAGE_NAME } from 'src/cache.pb'
 
 @Module({
     exports: [ PermissionsService ],
@@ -22,6 +25,21 @@ import { permissionsConfig } from './permissions.config'
             ),
         }
     ],
+    imports: [
+        ClientsModule.register([
+            {
+                name: CACHE_PACKAGE_NAME,
+                transport: Transport.GRPC,
+                options: {
+                    url: '127.0.0.1:50056',
+                    package: CACHE_PACKAGE_NAME,
+                    protoPath: join(
+                        __dirname, '..', '..', 'node_modules', 'syntx-protos', 'cache', 'cache.proto'
+                    ),
+                }
+            },
+        ]),
+    ]
 })
 export class PermissionsModule implements OnModuleInit {
 

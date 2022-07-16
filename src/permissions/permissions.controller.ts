@@ -12,6 +12,8 @@ import {
     Void,
     UserIdAndProjectId,
     Bool,
+    PermissionsIdsAndRoleId,
+    PermissionsIdsAndUserIdAndProjectId,
 } from '../roles.pb'
 import { PermissionsService } from './permissions.service'
 
@@ -32,7 +34,7 @@ export class PermissionsController implements PermissionsServiceController {
         return from(this.permissionsService.getPermissionsByRoleId(dto)).pipe(concatMap(x => x))
     }
 
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'getPermissionsByUserId')
+    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'getPermissionsByUserIdAndProjectId')
     public getPermissionsByUserIdAndProjectId(dto: UserIdAndProjectId): Observable<ProtoPermission> {
         return from(this.permissionsService.getPermissionsByUserIdAndProjectId(dto)).pipe(concatMap(x => x))
     }
@@ -47,24 +49,24 @@ export class PermissionsController implements PermissionsServiceController {
         return from(this.permissionsService.doesRoleHavePermission(dto))
     }
 
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'addPermissionToRole')
-    public addPermissionToRole(dto: PermissionIdAndRoleId): Observable<Void> {
-        return from(this.permissionsService.addPermissionToRole(dto))
+    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'addPermissionsToRole')
+    public addPermissionsToRole(dto: PermissionsIdsAndRoleId): Observable<Void> {
+        return from(this.permissionsService.addPermissionsToRole(dto))
     }
 
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'addPermissionToUserInProject')
-    public addPermissionToUserInProject(dto: PermissionIdAndUserIdAndProjectId): Observable<Void> {
-        return from(this.permissionsService.addPermissionToUserInProject(dto))
+    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'addPermissionsToUserInProject')
+    public addPermissionsToUserInProject(dto: PermissionsIdsAndUserIdAndProjectId): Observable<Void> {
+        return from(this.permissionsService.addPermissionsToUserInProject(dto))
     }
 
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'removePermissionFromRole')
-    public removePermissionFromRole(dto: PermissionIdAndRoleId): Observable<Void> {
-        return from(this.permissionsService.removePermissionFromRole(dto))
+    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'removePermissionsFromRole')
+    public removePermissionsFromRole(dto: PermissionsIdsAndRoleId): Observable<Void> {
+        return from(this.permissionsService.removePermissionsFromRole(dto))
     }
 
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'removePermissionFromUserInProject')
-    public removePermissionFromUserInProject(dto: PermissionIdAndUserIdAndProjectId): Observable<Void> {
-        return from(this.permissionsService.removePermissionFromUserInProject(dto))
+    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'removePermissionsFromUserInProject')
+    public removePermissionsFromUserInProject(dto: PermissionsIdsAndUserIdAndProjectId): Observable<Void> {
+        return from(this.permissionsService.removePermissionsFromUserInProject(dto))
     }
 
 }

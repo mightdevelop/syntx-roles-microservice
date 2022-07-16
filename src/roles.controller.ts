@@ -34,7 +34,7 @@ export class RolesController implements RolesServiceController {
         return from(this.rolesService.getRoleByName(dto))
     }
 
-    @GrpcMethod(ROLES_SERVICE_NAME, 'getRolesByUserId')
+    @GrpcMethod(ROLES_SERVICE_NAME, 'getRolesByUserIdAndProjectId')
     public getRolesByUserIdAndProjectId(dto: UserIdAndProjectId): Observable<ProtoRole> {
         return from(this.rolesService.getRolesByUserIdAndProjectId(dto)).pipe(concatMap(x => x))
     }

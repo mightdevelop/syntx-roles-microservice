@@ -8,13 +8,25 @@ import {
     RoleId,
     UserIdAndProjectId,
     Void,
-    Bool
+    Bool,
+    PermissionsIdsAndRoleId,
+    PermissionsIdsAndUserIdAndProjectId
 } from '../roles.pb'
 import { session as neo4jSession } from 'neo4j-driver'
-import { RpcException } from '@nestjs/microservices'
+import { ClientGrpc, RpcException } from '@nestjs/microservices'
+import { CACHE_PACKAGE_NAME, PermissionsCacheServiceClient, PERMISSIONS_CACHE_SERVICE_NAME } from 'src/cache.pb'
 
 @Injectable()
 export class PermissionsService {
+
+    private permissionsCacheService: PermissionsCacheServiceClient
+
+    @Inject(CACHE_PACKAGE_NAME)
+    private readonly client: ClientGrpc
+
+    onModuleInit(): void {
+        this.permissionsCacheService = this.client.getService<PermissionsCacheServiceClient>(PERMISSIONS_CACHE_SERVICE_NAME)
+    }
 
     @Inject('DATA_SOURCE')
     private readonly neo4jDriver: Driver
@@ -86,22 +98,44 @@ export class PermissionsService {
         { permissionId, projectId, userId }: PermissionIdAndUserIdAndProjectId
     ): Promise<Bool> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
-        const bool = !!(await session
+        const personalPermissions = (await session
             .run(
                 `
-                MATCH (p:Permission {id: $permissionId})
-                WHERE 
-                    (p)<-[:HAS_IN_PROJECT {projectId: $projectId}]-(:UserId {id: $userId})
-                    OR 
-                    (p)<-[:HAS]-(:Role)<-[:HAS]-(:UserId {id: $userId})
+                MATCH (p:Permission {id: $permissionId})<-[:HAS_IN_PROJECT {projectId: $projectId}]-(:UserId {id: $userId})
                 RETURN p
                 `,
                 { permissionId, projectId, userId }
             ))
             .records
-            .length
+            ?.map(record => record.get('p').properties)
+        const permissionsByRoles = (await session
+            .run(
+                `
+                MATCH (p:Permission {id: $permissionId})<-[:HAS]-(r:Role)<-[:HAS]-(:UserId {id: $userId})
+                RETURN p, r
+                `,
+                { permissionId, projectId, userId }
+            ))
+            .records
+            ?.map(record => ({
+                permission: record.get('p').properties,
+                role: record.get('r').properties,
+            }))
         session.close()
-        return { bool }
+        if (!personalPermissions.length && !permissionsByRoles.length) {
+            return { bool: false }
+        }
+        let roleId: string
+        if (!personalPermissions) {
+            roleId = permissionsByRoles[0].role.id
+        }
+        this.permissionsCacheService.addPermissionToUserInProject({
+            roleId,
+            permissionId,
+            userId,
+            projectId: permissionsByRoles[0].role.projectId
+        })
+        return { bool: true }
     }
 
     public async doesRoleHavePermission(
@@ -122,19 +156,20 @@ export class PermissionsService {
         return { bool }
     }
 
-    public async addPermissionToRole(
-        { permissionId, roleId }: PermissionIdAndRoleId
+    public async addPermissionsToRole(
+        { permissionsIds, roleId }: PermissionsIdsAndRoleId
     ): Promise<Void> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.WRITE })
         const permission: Permission = (await session
             .run(
                 `
-                MATCH (permission:Permission {id: $permissionId})
+                MATCH (permission:Permission)
+                WHERE permission.id IN $permissionsIds
                 MATCH (role:Role {id: $roleId})
                 MERGE (role)-[rel:HAS]->(permission)
                 RETURN permission
                 `,
-                { permissionId, roleId }
+                { roleId, permissionsIds }
             ))
             .records[0]
             ?.get('permission')
@@ -145,40 +180,44 @@ export class PermissionsService {
         return {}
     }
 
-    public async removePermissionFromRole(
-        { permissionId, roleId }: PermissionIdAndRoleId
+    public async removePermissionsFromRole(
+        { permissionsIds, roleId }: PermissionsIdsAndRoleId
     ): Promise<Void> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.WRITE })
-        const rel = (await session
+        const records = (await session
             .run(
                 `
-                MATCH (:Permission {id: $roleId})<-[rel:HAS]-(:UserId {id: $userId})
+                MATCH (permission:Permission)<-[rel:HAS]-(:Role {id: $roleId})
+                WHERE permission.id IN $permissionsIds
                 DELETE rel
-                RETURN rel
+                RETURN rel, permission.id as permissionsIds
                 `,
-                { permissionId, roleId }
+                { roleId, permissionsIds }
             ))
-            .records[0]
-            ?.get('rel')
-            .properties
+            .records
         session.close()
+        const rel = records[0]?.get('rel').properties
         if (!rel)
-            throw new RpcException({ message: 'Role hasn`t this permission' })
+            throw new RpcException({ message: 'Role hasn`t this permissions' })
+
+        permissionsIds = records.map(record => record.get('permissionsIds').properties.id)
+        this.permissionsCacheService.removePermissionsFromRole({ permissionsIds, roleId })
         return {}
     }
 
-    public async addPermissionToUserInProject(
-        { projectId, permissionId, userId }: PermissionIdAndUserIdAndProjectId
+    public async addPermissionsToUserInProject(
+        { projectId, permissionsIds, userId }: PermissionsIdsAndUserIdAndProjectId
     ): Promise<Void> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.WRITE })
         const rel = (await session
             .run(
                 `
-                MATCH (permission:Permission {id: $permissionId})
+                MATCH (permission:Permission)
+                WHERE permission.id IN $permissionsIds
                 MERGE (:UserId {id: $userId})-[rel:HAS_IN_PROJECT {projectId: $projectId}]->(permission)
                 RETURN rel
                 `,
-                { projectId, permissionId, userId }
+                { projectId, userId, permissionsIds }
             ))
             .records[0]
             ?.get('rel')
@@ -189,18 +228,19 @@ export class PermissionsService {
         return {}
     }
 
-    public async removePermissionFromUserInProject(
-        { projectId, permissionId, userId }: PermissionIdAndUserIdAndProjectId
+    public async removePermissionsFromUserInProject(
+        { projectId, permissionsIds, userId }: PermissionsIdsAndUserIdAndProjectId
     ): Promise<Void> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.WRITE })
         const rel = (await session
             .run(
                 `
-                MATCH (:Permission {id: $roleId})<-[rel:HAS]-(:UserId {id: $userId})
+                MATCH (:Permission)<-[rel:HAS_IN_PROJECT {projectId: $projectId}]-(:UserId {id: $userId})
+                WHERE permission.id IN &permissionsIds
                 DELETE rel
                 RETURN rel
                 `,
-                { projectId, permissionId, userId }
+                { projectId, userId, permissionsIds }
             ))
             .records[0]
             ?.get('rel')

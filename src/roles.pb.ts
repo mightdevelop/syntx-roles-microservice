@@ -65,8 +65,19 @@ export interface PermissionIdAndUserIdAndProjectId {
   projectId: string;
 }
 
+export interface PermissionsIdsAndUserIdAndProjectId {
+  permissionsIds: number[];
+  userId: string;
+  projectId: string;
+}
+
 export interface PermissionIdAndRoleId {
   permissionId: number;
+  roleId: string;
+}
+
+export interface PermissionsIdsAndRoleId {
+  permissionsIds: number[];
   roleId: string;
 }
 
@@ -185,17 +196,17 @@ export interface PermissionsServiceClient {
 
   doesRoleHavePermission(request: PermissionIdAndRoleId): Observable<Bool>;
 
-  addPermissionToUserInProject(
-    request: PermissionIdAndUserIdAndProjectId
+  addPermissionsToUserInProject(
+    request: PermissionsIdsAndUserIdAndProjectId
   ): Observable<Void>;
 
-  addPermissionToRole(request: PermissionIdAndRoleId): Observable<Void>;
+  addPermissionsToRole(request: PermissionsIdsAndRoleId): Observable<Void>;
 
-  removePermissionFromUserInProject(
-    request: PermissionIdAndUserIdAndProjectId
+  removePermissionsFromUserInProject(
+    request: PermissionsIdsAndUserIdAndProjectId
   ): Observable<Void>;
 
-  removePermissionFromRole(request: PermissionIdAndRoleId): Observable<Void>;
+  removePermissionsFromRole(request: PermissionsIdsAndRoleId): Observable<Void>;
 }
 
 export interface PermissionsServiceController {
@@ -217,20 +228,20 @@ export interface PermissionsServiceController {
     request: PermissionIdAndRoleId
   ): Promise<Bool> | Observable<Bool> | Bool;
 
-  addPermissionToUserInProject(
-    request: PermissionIdAndUserIdAndProjectId
+  addPermissionsToUserInProject(
+    request: PermissionsIdsAndUserIdAndProjectId
   ): Promise<Void> | Observable<Void> | Void;
 
-  addPermissionToRole(
-    request: PermissionIdAndRoleId
+  addPermissionsToRole(
+    request: PermissionsIdsAndRoleId
   ): Promise<Void> | Observable<Void> | Void;
 
-  removePermissionFromUserInProject(
-    request: PermissionIdAndUserIdAndProjectId
+  removePermissionsFromUserInProject(
+    request: PermissionsIdsAndUserIdAndProjectId
   ): Promise<Void> | Observable<Void> | Void;
 
-  removePermissionFromRole(
-    request: PermissionIdAndRoleId
+  removePermissionsFromRole(
+    request: PermissionsIdsAndRoleId
   ): Promise<Void> | Observable<Void> | Void;
 }
 
@@ -242,10 +253,10 @@ export function PermissionsServiceControllerMethods() {
       "getPermissionsByRoleId",
       "doesUserHavePermission",
       "doesRoleHavePermission",
-      "addPermissionToUserInProject",
-      "addPermissionToRole",
-      "removePermissionFromUserInProject",
-      "removePermissionFromRole",
+      "addPermissionsToUserInProject",
+      "addPermissionsToRole",
+      "removePermissionsFromUserInProject",
+      "removePermissionsFromRole",
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(
