@@ -15,6 +15,7 @@ import {
 import { session as neo4jSession } from 'neo4j-driver'
 import { ClientGrpc, RpcException } from '@nestjs/microservices'
 import { CACHE_PACKAGE_NAME, PermissionsCacheServiceClient, PERMISSIONS_CACHE_SERVICE_NAME } from 'src/cache.pb'
+import { Status } from '@grpc/grpc-js/build/src/constants'
 
 @Injectable()
 export class PermissionsService {
@@ -48,7 +49,7 @@ export class PermissionsService {
             .properties
         session.close()
         if (!permission)
-            throw new RpcException({ message: 'Permission not found' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'Permission not found' })
         return permission
     }
 
@@ -68,7 +69,7 @@ export class PermissionsService {
             ?.map(record => record.get('permission').properties)
         session.close()
         if (!permission)
-            throw new RpcException({ message: 'Permission not found' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'Permission not found' })
         return permission
     }
 
@@ -175,7 +176,7 @@ export class PermissionsService {
             ?.get('permission')
             .properties
         if (!permission)
-            throw new RpcException({ message: 'Query db error' })
+            throw new RpcException({ code: Status.UNAVAILABLE, message: 'Query db error' })
         session.close()
         return {}
     }
@@ -198,7 +199,7 @@ export class PermissionsService {
         session.close()
         const rel = records[0]?.get('rel').properties
         if (!rel)
-            throw new RpcException({ message: 'Role hasn`t this permissions' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'Role hasn`t this permissions' })
 
         permissionsIds = records.map(record => record.get('permissionsIds').properties.id)
         this.permissionsCacheService.removePermissionsFromRole({ permissionsIds, roleId })
@@ -224,7 +225,7 @@ export class PermissionsService {
             .properties
         session.close()
         if (!rel)
-            throw new RpcException({ message: 'Permission not found' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'Permission not found' })
         return {}
     }
 
@@ -247,7 +248,7 @@ export class PermissionsService {
             .properties
         session.close()
         if (!rel)
-            throw new RpcException({ message: 'User hasn`t this permission' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'User hasn`t this permission' })
         return {}
     }
 

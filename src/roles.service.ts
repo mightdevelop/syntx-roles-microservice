@@ -15,6 +15,7 @@ import {
 import { session as neo4jSession } from 'neo4j-driver'
 import { RpcException } from '@nestjs/microservices'
 import { v4 as uuidv4 } from 'uuid'
+import { Status } from '@grpc/grpc-js/build/src/constants'
 
 @Injectable()
 export class RolesService {
@@ -37,7 +38,7 @@ export class RolesService {
             .properties
         session.close()
         if (!role)
-            throw new RpcException({ message: 'Role not found' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'Role not found' })
         return role
     }
 
@@ -56,7 +57,7 @@ export class RolesService {
             .properties
         session.close()
         if (!role)
-            throw new RpcException({ message: 'Role not found' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'Role not found' })
         return role
     }
 
@@ -142,7 +143,7 @@ export class RolesService {
             .properties
         session.close()
         if (!role)
-            throw new RpcException({ message: 'Role not found' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'Role not found' })
         return role
     }
 
@@ -160,7 +161,7 @@ export class RolesService {
             .records[0]
         session.close()
         if (!result)
-            throw new RpcException({ message: 'Role not found' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'Role not found' })
         const role: Role = {
             id: result.get('id'),
             projectId: result.get('projectId'),
@@ -185,7 +186,7 @@ export class RolesService {
             .properties
         session.close()
         if (!rel)
-            throw new RpcException({ message: 'Role not found' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'Role not found' })
         return {}
     }
 
@@ -205,7 +206,7 @@ export class RolesService {
             .properties
         session.close()
         if (!rel)
-            throw new RpcException({ message: 'User hasn`t this role' })
+            throw new RpcException({ code: Status.NOT_FOUND, message: 'User hasn`t this role' })
         return {}
     }
 
