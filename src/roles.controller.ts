@@ -5,15 +5,13 @@ import {
     CreateRoleRequest,
     RoleIdAndName,
     Role as ProtoRole,
-    RoleByNameRequest,
+    SearchRolesParams,
     RolesServiceController,
     ROLES_SERVICE_NAME,
     Void,
     RoleId,
     UserId,
     RoleIdAndUserId,
-    ProjectId,
-    UserIdAndProjectId
 } from './roles.pb'
 import { RolesService } from './roles.service'
 
@@ -29,19 +27,9 @@ export class RolesController implements RolesServiceController {
         return from(this.rolesService.getRoleById(dto))
     }
 
-    @GrpcMethod(ROLES_SERVICE_NAME, 'getRoleByName')
-    public getRoleByName(dto: RoleByNameRequest): Observable<ProtoRole> {
-        return from(this.rolesService.getRoleByName(dto))
-    }
-
-    @GrpcMethod(ROLES_SERVICE_NAME, 'getRolesByUserIdAndProjectId')
-    public getRolesByUserIdAndProjectId(dto: UserIdAndProjectId): Observable<ProtoRole> {
-        return from(this.rolesService.getRolesByUserIdAndProjectId(dto)).pipe(concatMap(x => x))
-    }
-
-    @GrpcMethod(ROLES_SERVICE_NAME, 'getRolesByProjectId')
-    public getRolesByProjectId(dto: ProjectId): Observable<ProtoRole> {
-        return from(this.rolesService.getRolesByProjectId(dto)).pipe(concatMap(x => x))
+    @GrpcMethod(ROLES_SERVICE_NAME, 'searchRoles')
+    public searchRoles(dto: SearchRolesParams): Observable<ProtoRole> {
+        return from(this.rolesService.searchRoles(dto)).pipe(concatMap(x => x))
     }
 
     @GrpcMethod(ROLES_SERVICE_NAME, 'getUsersIdsByRoleId')

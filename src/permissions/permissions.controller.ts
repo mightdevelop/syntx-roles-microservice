@@ -6,14 +6,10 @@ import {
     PERMISSIONS_SERVICE_NAME,
     Permission as ProtoPermission,
     PermissionId,
-    RoleId,
-    PermissionIdAndRoleId,
-    PermissionIdAndUserIdAndProjectId,
     Void,
-    UserIdAndProjectId,
-    Bool,
     PermissionsIdsAndRoleId,
     PermissionsIdsAndUserIdAndProjectId,
+    SearchPermissionsParams,
 } from '../roles.pb'
 import { PermissionsService } from './permissions.service'
 
@@ -29,24 +25,9 @@ export class PermissionsController implements PermissionsServiceController {
         return from(this.permissionsService.getPermissionById(dto))
     }
 
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'getPermissionsByRoleId')
-    public getPermissionsByRoleId(dto: RoleId): Observable<ProtoPermission> {
-        return from(this.permissionsService.getPermissionsByRoleId(dto)).pipe(concatMap(x => x))
-    }
-
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'getPermissionsByUserIdAndProjectId')
-    public getPermissionsByUserIdAndProjectId(dto: UserIdAndProjectId): Observable<ProtoPermission> {
-        return from(this.permissionsService.getPermissionsByUserIdAndProjectId(dto)).pipe(concatMap(x => x))
-    }
-
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'doesUserHavePermission')
-    public doesUserHavePermission(dto: PermissionIdAndUserIdAndProjectId): Observable<Bool> {
-        return from(this.permissionsService.doesUserHavePermission(dto))
-    }
-
-    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'doesRoleHavePermission')
-    public doesRoleHavePermission(dto: PermissionIdAndRoleId): Observable<Bool> {
-        return from(this.permissionsService.doesRoleHavePermission(dto))
+    @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'searchPermissions')
+    public searchPermissions(dto: SearchPermissionsParams): Observable<ProtoPermission> {
+        return from(this.permissionsService.searchPermissions(dto)).pipe(concatMap(x => x))
     }
 
     @GrpcMethod(PERMISSIONS_SERVICE_NAME, 'addPermissionsToRole')

@@ -14,10 +14,6 @@ export interface Role {
   name: string;
 }
 
-export interface RoleByNameRequest {
-  roleName: string;
-}
-
 export interface CreateRoleRequest {
   projectId: string;
   name: string;
@@ -41,13 +37,17 @@ export interface UserIdAndProjectId {
   projectId: string;
 }
 
-export interface ProjectId {
-  projectId: string;
-}
-
 export interface RoleIdAndUserId {
   roleId: string;
   userId: string;
+}
+
+export interface SearchRolesParams {
+  userId?: string | undefined;
+  projectId?: string | undefined;
+  name?: string | undefined;
+  rolesIds: string[];
+  limit?: number | undefined;
 }
 
 export interface Permission {
@@ -59,21 +59,10 @@ export interface PermissionId {
   permissionId: number;
 }
 
-export interface PermissionIdAndUserIdAndProjectId {
-  permissionId: number;
-  userId: string;
-  projectId: string;
-}
-
 export interface PermissionsIdsAndUserIdAndProjectId {
   permissionsIds: number[];
   userId: string;
   projectId: string;
-}
-
-export interface PermissionIdAndRoleId {
-  permissionId: number;
-  roleId: string;
 }
 
 export interface PermissionsIdsAndRoleId {
@@ -85,16 +74,20 @@ export interface Bool {
   bool: boolean;
 }
 
+export interface SearchPermissionsParams {
+  params?:
+    | { $case: "userIdAndProjectId"; userIdAndProjectId: UserIdAndProjectId }
+    | { $case: "roleId"; roleId: string };
+  permissionsIds: string[];
+  limit?: number | undefined;
+}
+
 export const ROLES_PACKAGE_NAME = "roles";
 
 export interface RolesServiceClient {
   getRoleById(request: RoleId): Observable<Role>;
 
-  getRoleByName(request: RoleByNameRequest): Observable<Role>;
-
-  getRolesByUserIdAndProjectId(request: UserIdAndProjectId): Observable<Role>;
-
-  getRolesByProjectId(request: ProjectId): Observable<Role>;
+  searchRoles(request: SearchRolesParams): Observable<Role>;
 
   getUsersIdsByRoleId(request: RoleId): Observable<UserId>;
 
@@ -112,13 +105,9 @@ export interface RolesServiceClient {
 export interface RolesServiceController {
   getRoleById(request: RoleId): Promise<Role> | Observable<Role> | Role;
 
-  getRoleByName(
-    request: RoleByNameRequest
+  searchRoles(
+    request: SearchRolesParams
   ): Promise<Role> | Observable<Role> | Role;
-
-  getRolesByUserIdAndProjectId(request: UserIdAndProjectId): Observable<Role>;
-
-  getRolesByProjectId(request: ProjectId): Observable<Role>;
 
   getUsersIdsByRoleId(request: RoleId): Observable<UserId>;
 
@@ -143,9 +132,7 @@ export function RolesServiceControllerMethods() {
   return function (constructor: Function) {
     const grpcMethods: string[] = [
       "getRoleById",
-      "getRoleByName",
-      "getRolesByUserIdAndProjectId",
-      "getRolesByProjectId",
+      "searchRoles",
       "getUsersIdsByRoleId",
       "createRole",
       "updateRole",
@@ -184,17 +171,7 @@ export const ROLES_SERVICE_NAME = "RolesService";
 export interface PermissionsServiceClient {
   getPermissionById(request: PermissionId): Observable<Permission>;
 
-  getPermissionsByUserIdAndProjectId(
-    request: UserIdAndProjectId
-  ): Observable<Permission>;
-
-  getPermissionsByRoleId(request: RoleId): Observable<Permission>;
-
-  doesUserHavePermission(
-    request: PermissionIdAndUserIdAndProjectId
-  ): Observable<Bool>;
-
-  doesRoleHavePermission(request: PermissionIdAndRoleId): Observable<Bool>;
+  searchPermissions(request: SearchPermissionsParams): Observable<Permission>;
 
   addPermissionsToUserInProject(
     request: PermissionsIdsAndUserIdAndProjectId
@@ -214,19 +191,7 @@ export interface PermissionsServiceController {
     request: PermissionId
   ): Promise<Permission> | Observable<Permission> | Permission;
 
-  getPermissionsByUserIdAndProjectId(
-    request: UserIdAndProjectId
-  ): Observable<Permission>;
-
-  getPermissionsByRoleId(request: RoleId): Observable<Permission>;
-
-  doesUserHavePermission(
-    request: PermissionIdAndUserIdAndProjectId
-  ): Promise<Bool> | Observable<Bool> | Bool;
-
-  doesRoleHavePermission(
-    request: PermissionIdAndRoleId
-  ): Promise<Bool> | Observable<Bool> | Bool;
+  searchPermissions(request: SearchPermissionsParams): Observable<Permission>;
 
   addPermissionsToUserInProject(
     request: PermissionsIdsAndUserIdAndProjectId
@@ -249,10 +214,7 @@ export function PermissionsServiceControllerMethods() {
   return function (constructor: Function) {
     const grpcMethods: string[] = [
       "getPermissionById",
-      "getPermissionsByUserIdAndProjectId",
-      "getPermissionsByRoleId",
-      "doesUserHavePermission",
-      "doesRoleHavePermission",
+      "searchPermissions",
       "addPermissionsToUserInProject",
       "addPermissionsToRole",
       "removePermissionsFromUserInProject",

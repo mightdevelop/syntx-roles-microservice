@@ -3,14 +3,10 @@ import { Driver } from 'neo4j-driver'
 import {
     Permission,
     PermissionId,
-    PermissionIdAndRoleId,
-    PermissionIdAndUserIdAndProjectId,
-    RoleId,
-    UserIdAndProjectId,
     Void,
-    Bool,
     PermissionsIdsAndRoleId,
-    PermissionsIdsAndUserIdAndProjectId
+    PermissionsIdsAndUserIdAndProjectId,
+    SearchPermissionsParams
 } from '../roles.pb'
 import { session as neo4jSession } from 'neo4j-driver'
 import { ClientGrpc, RpcException } from '@nestjs/microservices'
@@ -53,108 +49,44 @@ export class PermissionsService {
         return permission
     }
 
-    public async getPermissionsByRoleId(
-        { roleId }: RoleId
+    public async searchPermissions(
+        { permissionsIds, limit, params }: SearchPermissionsParams
     ): Promise<Permission[]> {
-        const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
-        const permission: Permission[] = (await session
-            .run(
-                `
-                MATCH (permission:Permission)<-[:HAS]-(:Role {id: $roleId})
-                RETURN permission
-                `,
-                { roleId }
-            ))
-            .records
-            ?.map(record => record.get('permission').properties)
-        session.close()
-        if (!permission)
-            throw new RpcException({ code: Status.NOT_FOUND, message: 'Permission not found' })
-        return permission
-    }
 
-    public async getPermissionsByUserIdAndProjectId(
-        { userId, projectId }: UserIdAndProjectId
-    ): Promise<Permission[]> {
+        const roleId = params.$case === 'roleId'
+            ? params.roleId
+            : undefined
+
+        const { userId, projectId } = params.$case === 'userIdAndProjectId'
+            ? params.userIdAndProjectId
+            : undefined
+
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
         const permissions: Permission[] = (await session
             .run(
                 `
                 MATCH (p:Permission)
-                WHERE 
-                    (p)<-[:HAS_IN_PROJECT {projectId: $projectId}]-(:UserId {id: $userId})
-                    OR 
-                    (p)<-[:HAS]-(:Role)<-[:HAS]-(:UserId {id: $userId})
+                WHERE
+                    p.id IN &permissionsIds
+                    AND
+                    (
+                        (p)<-[:HAS]-(:Role {id: $roleId})
+                        OR
+                        (
+                            (p)<-[:HAS_IN_PROJECT {projectId: $projectId}]-(:UserId {id: $userId})
+                            OR
+                            (p)<-[:HAS]-(:Role)<-[:HAS]-(:UserId {id: $userId})
+                        )
+                    )
                 RETURN p
+                LIMIT $limit
                 `,
-                { userId, projectId }
+                { permissionsIds, limit, roleId, userId, projectId }
             ))
             .records
             ?.map(record => record.get('p').properties)
         session.close()
         return permissions
-    }
-
-    public async doesUserHavePermission(
-        { permissionId, projectId, userId }: PermissionIdAndUserIdAndProjectId
-    ): Promise<Bool> {
-        const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
-        const personalPermissions = (await session
-            .run(
-                `
-                MATCH (p:Permission {id: $permissionId})<-[:HAS_IN_PROJECT {projectId: $projectId}]-(:UserId {id: $userId})
-                RETURN p
-                `,
-                { permissionId, projectId, userId }
-            ))
-            .records
-            ?.map(record => record.get('p').properties)
-        const permissionsByRoles = (await session
-            .run(
-                `
-                MATCH (p:Permission {id: $permissionId})<-[:HAS]-(r:Role)<-[:HAS]-(:UserId {id: $userId})
-                RETURN p, r
-                `,
-                { permissionId, projectId, userId }
-            ))
-            .records
-            ?.map(record => ({
-                permission: record.get('p').properties,
-                role: record.get('r').properties,
-            }))
-        session.close()
-        if (!personalPermissions.length && !permissionsByRoles.length) {
-            return { bool: false }
-        }
-        let roleId: string
-        if (!personalPermissions) {
-            roleId = permissionsByRoles[0].role.id
-        }
-        this.permissionsCacheService.addPermissionToUserInProject({
-            roleId,
-            permissionId,
-            userId,
-            projectId: permissionsByRoles[0].role.projectId
-        })
-        return { bool: true }
-    }
-
-    public async doesRoleHavePermission(
-        { permissionId, roleId }: PermissionIdAndRoleId
-    ): Promise<Bool> {
-        const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
-        const bool = !!(await session
-            .run(
-                `
-                MATCH (p:Permission {id: $permissionId})<-[:HAS]-(:Role {id: $roleId})
-                RETURN p
-                `,
-                { permissionId, roleId }
-            ))
-            .records
-            .length
-        session.close()
-        return { bool }
     }
 
     public async addPermissionsToRole(

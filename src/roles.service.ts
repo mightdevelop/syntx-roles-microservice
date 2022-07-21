@@ -2,14 +2,12 @@ import { Inject, Injectable } from '@nestjs/common'
 import { Driver } from 'neo4j-driver'
 import {
     CreateRoleRequest,
-    ProjectId,
     Role,
-    RoleByNameRequest,
     RoleId,
     RoleIdAndName,
     RoleIdAndUserId,
+    SearchRolesParams,
     UserId,
-    UserIdAndProjectId,
     Void,
 } from './roles.pb'
 import { session as neo4jSession } from 'neo4j-driver'
@@ -42,53 +40,25 @@ export class RolesService {
         return role
     }
 
-    public async getRoleByName({ roleName }: RoleByNameRequest): Promise<Role> {
+    public async searchRoles(searchParams: SearchRolesParams): Promise<Role[]> {
         const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
-        const role: Role = (await session
+        const roles: Role[] = (await session
             .run(
                 `
-                MATCH (role:Role {name: $roleName})
+                MATCH (role:Role)
+                WHERE 
+                    role.id IN &rolesIds
+                    AND
+                    role.name = $name
+                    AND
+                    (role {projectId: $projectId})<-[:HAS]-(:UserId {id: $userId})
                 RETURN role
+                LIMIT $limit
                 `,
-                { roleName }
+                searchParams
             ))
             .records[0]
-            ?.get('role')
-            .properties
-        session.close()
-        if (!role)
-            throw new RpcException({ code: Status.NOT_FOUND, message: 'Role not found' })
-        return role
-    }
-
-    public async getRolesByUserIdAndProjectId({ userId, projectId }: UserIdAndProjectId): Promise<Role[]> {
-        const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
-        const roles: Role[] = (await session
-            .run(
-                `
-                MATCH (role:Role {projectId: $projectId})<-[:HAS]-(:UserId {id: $userId})
-                RETURN role
-                `,
-                { userId, projectId }
-            ))
-            .records
-            ?.map(record => record.get('role').properties)
-        session.close()
-        return roles
-    }
-
-    public async getRolesByProjectId({ projectId }: ProjectId): Promise<Role[]> {
-        const session = this.neo4jDriver.session({ defaultAccessMode: neo4jSession.READ })
-        const roles: Role[] = (await session
-            .run(
-                `
-                MATCH (role:Role {projectId: $projectId})
-                RETURN role
-                `,
-                { projectId }
-            ))
-            .records
-            ?.map(record => record.get('role').properties)
+            ?.map(record => record.get('role').properties.id)
         session.close()
         return roles
     }
