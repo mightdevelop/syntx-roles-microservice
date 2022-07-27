@@ -78,7 +78,7 @@ export interface SearchPermissionsParams {
   params?:
     | { $case: "userIdAndProjectId"; userIdAndProjectId: UserIdAndProjectId }
     | { $case: "roleId"; roleId: string };
-  permissionsIds: string[];
+  permissionsIds: number[];
   limit?: number | undefined;
 }
 

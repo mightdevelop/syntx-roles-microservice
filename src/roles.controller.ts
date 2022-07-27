@@ -12,7 +12,7 @@ import {
     RoleId,
     UserId,
     RoleIdAndUserId,
-} from './roles.pb'
+} from './pb/roles.pb'
 import { RolesService } from './roles.service'
 
 @Controller()

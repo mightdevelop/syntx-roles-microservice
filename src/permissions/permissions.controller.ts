@@ -10,7 +10,7 @@ import {
     PermissionsIdsAndRoleId,
     PermissionsIdsAndUserIdAndProjectId,
     SearchPermissionsParams,
-} from '../roles.pb'
+} from '../pb/roles.pb'
 import { PermissionsService } from './permissions.service'
 
 @Controller()

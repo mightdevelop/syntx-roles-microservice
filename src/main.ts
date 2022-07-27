@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core'
 import { Transport } from '@nestjs/microservices'
 import { join } from 'path'
 import { RolesModule } from './roles.module'
-import { ROLES_PACKAGE_NAME } from './roles.pb'
+import { ROLES_PACKAGE_NAME } from './pb/roles.pb'
 
 async function bootstrap() {
     const app = await NestFactory.createMicroservice(
